@@ -1,0 +1,32 @@
+# ============================================
+# ルートリポジトリの管理範囲（2層構成）
+#   管理する: AGENTS.md, CLAUDE.md, GEMINI.md, AI/, Docs/, Sandbox/, .vscode/
+#   管理しない: Repo/ の中身（アプリごとに独立リポジトリで管理）
+# ============================================
+
+# Repo内はアプリ側の独立リポジトリに任せる（.gitkeepだけ残す）
+Repo/*
+!Repo/.gitkeep
+!Repo/README.md
+
+# --- macOS ---
+.DS_Store
+
+# --- Sandbox等の生成物（検証コード自体はコミットする） ---
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.log
+
+# Xcode / Swift
+DerivedData/
+.build/
+*.xcuserstate
+xcuserdata/
+
+# 環境変数・秘密情報
+.env
+.env.*
+!.env.example

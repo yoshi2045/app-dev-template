@@ -1,0 +1,14 @@
+{
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/DerivedData": true,
+    "**/node_modules": true
+  },
+  "markdown.extension.toc.updateOnSave": false,
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  }
+}

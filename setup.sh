@@ -12,6 +12,7 @@
 # やること:
 #   - CLAUDE.md / GEMINI.md のシンボリックリンクを（再）作成
 #   - テンプレート由来の .git を削除し、新規リポジトリとして git init
+#   - コピー先で不要な TEMPLATE_README.md を削除
 #   - 初回コミットを作成
 # ============================================================
 set -euo pipefail
@@ -43,6 +44,12 @@ if [ -d ".git" ]; then
     echo "  Git初期化をスキップしました（リンク作成のみ実施）"
     exit 0
   fi
+fi
+
+# テンプレート用の不要な説明ファイルを削除
+if [ -f "TEMPLATE_README.md" ]; then
+  rm -f TEMPLATE_README.md
+  echo "  TEMPLATE_README.md を削除しました"
 fi
 
 git init -b main

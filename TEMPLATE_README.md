@@ -94,11 +94,18 @@ create-app() {
     return 1
   fi
   local PROJECT_NAME="$1"
-  local GITHUB_USER="<あなたのアカウント名>"
+  local GITHUB_USER="<あなたのアカウント名>"  # 例: yoshi2045
 
-  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template"
-  git clone "git@github.com:${GITHUB_USER}/${PROJECT_NAME}-workspace.git" "${PROJECT_NAME}"
-  cd "${PROJECT_NAME}" && ./setup.sh
+  echo "🚀 [1/2] ワークスペース (${PROJECT_NAME}-workspace) を作成＆クローン中..."
+  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template" --clone -- "${PROJECT_NAME}"
+
+  if [ ! -d "${PROJECT_NAME}" ] || [ ! -f "${PROJECT_NAME}/setup.sh" ]; then
+    echo "❌ エラー: クローンに失敗したか、setup.sh が見つかりません。"
+    return 1
+  fi
+
+  echo "⚙️ [2/2] 初期化スクリプトを実行中..."
+  (cd "${PROJECT_NAME}" && ./setup.sh)
 }
 ```
 

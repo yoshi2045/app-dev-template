@@ -49,10 +49,12 @@ else
   IS_NEW_GIT=true
 fi
 
-# テンプレート用の不要な説明ファイルを削除
-if [ -f "TEMPLATE_README.md" ]; then
-  rm -f TEMPLATE_README.md
-  echo "  TEMPLATE_README.md を削除しました"
+# テンプレート用の不要な説明ファイルを削除（新規プロジェクトの場合のみ）
+if [ "$PROJECT_NAME" != "app-dev-template" ]; then
+  if [ -f "TEMPLATE_README.md" ]; then
+    rm -f TEMPLATE_README.md
+    echo "  TEMPLATE_README.md を削除しました"
+  fi
 fi
 
 if [ "$IS_NEW_GIT" = true ]; then
@@ -95,3 +97,9 @@ echo "  2. Docs/01_concept.md にコンセプトメモを書く"
 echo "  3. プロジェクトルートで claude / gemini を起動して開発開始"
 echo "     （※ Repo/ 配下のコードはワークスペース（②）のgit管理外です。"
 echo "        作業の区切りでは②と③の両方で git status を確認してください）"
+
+# --- 4. スクリプト自身の削除（新規プロジェクトの場合のみ） ---
+if [ "$PROJECT_NAME" != "app-dev-template" ]; then
+  echo "  setup.sh を削除しました"
+  rm -f -- "$0"
+fi

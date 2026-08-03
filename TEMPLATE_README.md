@@ -3,7 +3,7 @@
 個人アプリ開発（Web / macOS / iOS）用のプロジェクトテンプレート。
 複数のAI（Claude Code / Gemini CLI 等）が同じコンテキストを共有し、途中交代できる構成になっています。
 
-> **注**: このファイルはテンプレート自体の説明書です。新規プロジェクト作成後は削除して構いません
+> **注**: このファイルはテンプレート自体の説明書です。新規プロジェクト作成時に `setup.sh` が自動削除します
 > （プロジェクトの運用ルールはすべて `AGENTS.md` に書かれています）。
 
 ## 構成
@@ -70,7 +70,7 @@ GitHubは改名時に旧URLからリダイレクトを張りますが、**旧名
 
 # 1. ワークスペース用リポジトリ（②）を作成して clone
 gh repo create my-new-app-workspace --private --template <あなたのアカウント>/app-dev-template
-git clone git@github.com:<あなたのアカウント>/my-new-app-workspace.git my-new-app
+gh repo clone <あなたのアカウント>/my-new-app-workspace my-new-app
 
 # 2. 初期化スクリプトを実行（アプリ本体 ③ Repo/my-new-app のGitHub作成まで全自動完了）
 cd my-new-app && ./setup.sh
@@ -96,12 +96,21 @@ create-app() {
   local PROJECT_NAME="$1"
   local GITHUB_USER="<あなたのアカウント名>"  # 例: yoshi2045
 
+  # ローカル同名フォルダのチェック
+  if [ -d "${PROJECT_NAME}" ]; then
+    echo "❌ エラー: ローカルにすでにフォルダ '${PROJECT_NAME}' が存在します。削除または別の名前を指定してください。"
+    return 1
+  fi
+
   echo "🚀 [1/3] ワークスペース (${PROJECT_NAME}-workspace) をGitHub上に作成中..."
-  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template"
+  if ! gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template"; then
+    echo "❌ エラー: GitHub上のリポジトリ '${PROJECT_NAME}-workspace' の作成に失敗しました。"
+    return 1
+  fi
 
   echo "📥 [2/3] ローカル (${PROJECT_NAME}) へクローン中..."
   local count=0
-  until git clone "git@github.com:${GITHUB_USER}/${PROJECT_NAME}-workspace.git" "${PROJECT_NAME}" 2>/dev/null || [ $count -ge 5 ]; do
+  until gh repo clone "${GITHUB_USER}/${PROJECT_NAME}-workspace" "${PROJECT_NAME}" >/dev/null 2>&1 || [ $count -ge 5 ]; do
     sleep 2
     count=$((count + 1))
   done

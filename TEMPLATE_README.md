@@ -96,15 +96,22 @@ create-app() {
   local PROJECT_NAME="$1"
   local GITHUB_USER="<あなたのアカウント名>"  # 例: yoshi2045
 
-  echo "🚀 [1/2] ワークスペース (${PROJECT_NAME}-workspace) を作成＆クローン中..."
-  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template" --clone -- "${PROJECT_NAME}"
+  echo "🚀 [1/3] ワークスペース (${PROJECT_NAME}-workspace) をGitHub上に作成中..."
+  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template"
+
+  echo "📥 [2/3] ローカル (${PROJECT_NAME}) へクローン中..."
+  local count=0
+  until git clone "git@github.com:${GITHUB_USER}/${PROJECT_NAME}-workspace.git" "${PROJECT_NAME}" 2>/dev/null || [ $count -ge 5 ]; do
+    sleep 2
+    count=$((count + 1))
+  done
 
   if [ ! -d "${PROJECT_NAME}" ] || [ ! -f "${PROJECT_NAME}/setup.sh" ]; then
-    echo "❌ エラー: クローンに失敗したか、setup.sh が見つかりません。"
+    echo "❌ エラー: クローンに失敗しました。GitHub上のリポジトリ (${PROJECT_NAME}-workspace) を確認してください。"
     return 1
   fi
 
-  echo "⚙️ [2/2] 初期化スクリプトを実行中..."
+  echo "⚙️ [3/3] 初期化スクリプトを実行中..."
   (cd "${PROJECT_NAME}" && ./setup.sh)
 }
 ```

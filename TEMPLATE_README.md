@@ -60,31 +60,48 @@ GitHubは改名時に旧URLからリダイレクトを張りますが、**旧名
 
 ## 新規プロジェクトの始め方
 
+新規プロジェクト作成時に、**ワークスペース用（②）**と**アプリ本体用（③）**の2つのリポジトリを準備します。
+
 ```bash
-# 方法A: GitHubテンプレートリポジトリから（推奨）
-#   ②のリポジトリ名は -workspace 付き、ローカルのフォルダ名は接尾辞なしにする
+# ------------------------------------------------------------
+# 方法A: GitHubテンプレートリポジトリから作成（推奨）
+# ------------------------------------------------------------
+
+# 1. ワークスペース用リポジトリ（②）を作成して clone
+#    リポジトリ名には -workspace を付け、ローカルフォルダ名は接尾辞なし（MyNewApp）にする
 gh repo create MyNewApp-workspace --private --template <あなたのアカウント>/app-dev-template
 git clone git@github.com:<あなたのアカウント>/MyNewApp-workspace.git MyNewApp
-cd MyNewApp && ./setup.sh   # .git削除の確認は「N」（作成済みリポジトリのremoteを維持するため）
+cd MyNewApp && ./setup.sh   # .git削除の確認は「N」（作成済みremoteを維持するため）
 
-# 方法B: ローカルコピーから（GitHubへは setup.sh 完了後に上げる）
+# 2. アプリ本体用リポジトリ（③）を初期化してGitHubに作成
+#    アプリ本体は接尾辞なしのクリーンな名前（my-app または MyNewApp）を使う
+mkdir -p Repo/my-app
+cd Repo/my-app
+git init -b main
+echo "# my-app" > README.md
+git add README.md && git commit -m "Initial commit"
+gh repo create my-app --private --source=. --remote=origin --push
+cd ../..   # プロジェクトルートに戻る
+
+# ------------------------------------------------------------
+# 方法B: ローカルコピーから作成
+# ------------------------------------------------------------
 cp -R app-dev-template MyNewApp
 cd MyNewApp && ./setup.sh
+# その後、ワークスペース（②）とアプリ本体（③）それぞれで gh repo create を実行
 ```
 
 その後:
 1. `AGENTS.md` のプロジェクト概要を書き換える
 2. `Docs/01_concept.md` にアイデアを書く
 3. プロジェクトルートで `claude`（または `gemini`）を起動 → 「AGENTS.mdとAI/STATUS.mdを読んで開始して」
-4. `Repo/my-app/` を作ったら、**そこで `git init` して③のリポジトリを別途作成・pushする**
-   （②をコミットしてもアプリのコードは1行も入らない。下記「よくある落とし穴」参照）
 
 ### よくある落とし穴：②をコミットしてもアプリのコードは保存されない
 
 `.gitignore` で `Repo/*` を除外しているため、**アプリ側の変更は②の `git status` に一切現れません。**
 実際に「②のコミットメッセージはアプリの実装を語っているのに、中身は `AI/` の更新だけ」という状態が数週間続き、
 アプリのコードがローカル1台にしか存在しなかった事例があります（investment-support、2026-07〜08）。
-作業の区切りでは**②と③の両方**の `git status` を確認してください。
+作業の区切りでは**②（`MyNewApp-workspace`）と③（`my-app`）の両方**の `git status` を確認し、それぞれコミット・pushしてください。
 
 ## テンプレート自体のバージョン管理
 

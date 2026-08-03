@@ -4,10 +4,10 @@
 #
 # 使い方:
 #   1. テンプレートをコピーしてリネーム
-#        cp -R app-dev-template MyNewApp
+#        cp -R app-dev-template my-new-app
 #      （またはGitHubの "Use this template" → clone）
 #   2. プロジェクトルートで実行
-#        cd MyNewApp && ./setup.sh
+#        cd my-new-app && ./setup.sh
 #
 # やること:
 #   - CLAUDE.md / GEMINI.md のシンボリックリンクを（再）作成
@@ -35,15 +35,18 @@ for f in CLAUDE.md GEMINI.md; do
 done
 
 # --- 2. テンプレートのGit履歴を切り離して新規リポジトリ化 ---
+IS_NEW_GIT=false
 if [ -d ".git" ]; then
-  read -p "既存の .git があります。削除して新規リポジトリとして初期化しますか? [y/N]: " ans
-  if [ "${ans:-N}" = "y" ] || [ "${ans:-N}" = "Y" ]; then
-    rm -rf .git
-    echo "  テンプレートのGit履歴を削除しました"
+  REMOTE_URL=$(git remote get-url origin 2>/dev/null || true)
+  if [ -n "$REMOTE_URL" ] && [[ "$REMOTE_URL" != *"app-dev-template"* ]]; then
+    echo "  既存のワークスペースGit設定・リモートURLを維持します (${REMOTE_URL})"
   else
-    echo "  Git初期化をスキップしました（リンク作成のみ実施）"
-    exit 0
+    rm -rf .git
+    echo "  テンプレートの旧Git履歴を削除し、新規リポジトリとして初期化します"
+    IS_NEW_GIT=true
   fi
+else
+  IS_NEW_GIT=true
 fi
 
 # テンプレート用の不要な説明ファイルを削除
@@ -52,16 +55,43 @@ if [ -f "TEMPLATE_README.md" ]; then
   echo "  TEMPLATE_README.md を削除しました"
 fi
 
-git init -b main
-git add -A
-git commit -m "Initialize project from app-dev-template"
+if [ "$IS_NEW_GIT" = true ]; then
+  git init -b main
+  git add -A
+  git commit -m "Initialize project from app-dev-template"
+fi
+
+# --- 3. アプリ本体リポジトリ（③）の初期化とGitHub作成 ---
+if [ "$PROJECT_NAME" != "app-dev-template" ]; then
+  REPO_DIR="Repo/${PROJECT_NAME}"
+  if [ ! -d "$REPO_DIR/.git" ]; then
+    echo "  アプリ本体リポジトリ (Repo/${PROJECT_NAME}) を自動初期化中..."
+    mkdir -p "$REPO_DIR"
+    (
+      cd "$REPO_DIR"
+      git init -b main
+      if [ ! -f "README.md" ]; then
+        echo "# ${PROJECT_NAME}" > README.md
+      fi
+      git add -A
+      git commit -m "Initial commit"
+      if command -v gh &> /dev/null && gh auth status &> /dev/null; then
+        gh repo create "${PROJECT_NAME}" --private --source=. --remote=origin --push
+        echo "  GitHubリポジトリ「${PROJECT_NAME}」を作成・pushしました"
+      else
+        echo "  注意: gh (GitHub CLI) が未認証のためGitHub作成をスキップしました。"
+        echo "  後で Repo/${PROJECT_NAME} にて 'gh repo create ${PROJECT_NAME} --private --source=. --remote=origin --push' を実行してください。"
+      fi
+    )
+  else
+    echo "  Repo/${PROJECT_NAME} には既に .git が存在するため、作成をスキップしました"
+  fi
+fi
+
 echo ""
 echo "完了！ 次のステップ:"
 echo "  1. AGENTS.md の「プロジェクト概要」を書き換える"
 echo "  2. Docs/01_concept.md にコンセプトメモを書く"
-echo "  3. 2つのGitHubリポジトリを作成して準備する:"
-echo "     ・ワークスペース用（②）: gh repo create ${PROJECT_NAME}-workspace --private --source=. --push"
-echo "     ・アプリ本体用（③）: Repo/<アプリ名>/ で git init し、gh repo create <アプリ名> --private --source=. --push"
-echo "  4. プロジェクトルートで claude / gemini を起動して開発開始"
+echo "  3. プロジェクトルートで claude / gemini を起動して開発開始"
 echo "     （※ Repo/ 配下のコードはワークスペース（②）のgit管理外です。"
 echo "        作業の区切りでは②と③の両方で git status を確認してください）"

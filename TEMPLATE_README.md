@@ -27,20 +27,21 @@ app-dev-template/
 | リポジトリ | ローカルの場所 | GitHub上の名前 | 役割 |
 |---|---|---|---|
 | ① テンプレート | `app-dev-template/` | `app-dev-template` | テンプレート自体の進化を管理。GitHubで**テンプレートリポジトリ**に設定 |
-| ② プロジェクトルート | `MyNewApp/` | `MyNewApp-workspace` | AGENTS.md・AI/・Docs/・Sandbox/ の履歴管理とバックアップ（Repo/は除外） |
-| ③ アプリ本体 | `MyNewApp/Repo/my-app/` | `my-app` | ソースコード。アプリごとに独立 |
+| ② プロジェクトルート | `my-new-app/` | `my-new-app-workspace` | AGENTS.md・AI/・Docs/・Sandbox/ の履歴管理とバックアップ（Repo/は除外） |
+| ③ アプリ本体 | `my-new-app/Repo/my-new-app/` | `my-new-app` | ソースコード。アプリごとに独立 |
 
 ### 命名ルール：接尾辞は②（ワークスペース）側に付ける
 
-**成果物である③がクリーンな名前を取り、ドキュメント作業場である②が `-workspace` を名乗ります。**
+**プロジェクトルートフォルダ名、アプリ本体フォルダ名、アプリ本体リポジトリ名はすべて同じ名称（例: `my-new-app`）を使用し、ワークスペースである②のGitHubリポジトリ名にのみ `-workspace` を付けます。**
+成果物である③がクリーンな名前を取り、ドキュメント作業場である②が `-workspace` を名乗ります。
 ③はいずれ clone / deploy / 公開 / CI の対象になる「外に出るリポジトリ」であり、URLに接尾辞が残ると長く不自然になるためです。
 逆に③に `-app` を付ける案は、次の成果物がCLIやライブラリだったときに名前が実態と合わなくなります（`-workspace` は成果物の種類に依存しません）。
 
-**接尾辞が付くのはGitHub上の名前だけで、ローカルのフォルダ名は `MyNewApp/` のまま**です（`setup.sh` はフォルダ名をプロジェクト名として使うため）。
+**接尾辞が付くのはGitHub上の名前だけで、ローカルのフォルダ名は `my-new-app/` のまま**です（`setup.sh` はフォルダ名をプロジェクト名として使うため）。
 別マシンへcloneするときはフォルダ名を指定して合わせます:
 
 ```bash
-git clone git@github.com:<あなたのアカウント>/MyNewApp-workspace.git MyNewApp
+git clone git@github.com:<あなたのアカウント>/my-new-app-workspace.git my-new-app
 ```
 
 ### ②を改名して③に名前を譲る場合の手順（既存プロジェクトの移行）
@@ -48,9 +49,9 @@ git clone git@github.com:<あなたのアカウント>/MyNewApp-workspace.git My
 ②が先にクリーンな名前を取ってしまっている場合は、**必ずこの順序**で行います。
 
 ```bash
-cd MyNewApp && gh repo rename MyNewApp-workspace --yes   # ②を改名（ローカルremoteも自動更新される）
+cd my-new-app && gh repo rename my-new-app-workspace --yes   # ②を改名（ローカルremoteも自動更新される）
 git remote -v                                            # ★ 向き先が -workspace になったことを必ず確認
-cd Repo/my-app && gh repo create my-app --private --source=. --remote=origin --push   # ③を作成
+cd Repo/my-new-app && gh repo create my-new-app --private --source=. --remote=origin --push   # ③を作成
 ```
 
 逆順やremote更新漏れがあると、③が旧名を取った瞬間に②からの `git push` が③へ飛びます。
@@ -60,35 +61,45 @@ GitHubは改名時に旧URLからリダイレクトを張りますが、**旧名
 
 ## 新規プロジェクトの始め方
 
-新規プロジェクト作成時に、**ワークスペース用（②）**と**アプリ本体用（③）**の2つのリポジトリを準備します。
+新規プロジェクト作成時に、**ワークスペース用（②）**と**アプリ本体用（③）**の2つのリポジトリを準備します。`setup.sh` を実行すれば、アプリ本体（③）の `git init` やGitHub作成も全自動で完了します。
 
 ```bash
 # ------------------------------------------------------------
-# 方法A: GitHubテンプレートリポジトリから作成（推奨）
+# 方法A: 2アクションで作成（推奨）
 # ------------------------------------------------------------
 
 # 1. ワークスペース用リポジトリ（②）を作成して clone
-#    リポジトリ名には -workspace を付け、ローカルフォルダ名は接尾辞なし（MyNewApp）にする
-gh repo create MyNewApp-workspace --private --template <あなたのアカウント>/app-dev-template
-git clone git@github.com:<あなたのアカウント>/MyNewApp-workspace.git MyNewApp
-cd MyNewApp && ./setup.sh   # .git削除の確認は「N」（作成済みremoteを維持するため）
+gh repo create my-new-app-workspace --private --template <あなたのアカウント>/app-dev-template
+git clone git@github.com:<あなたのアカウント>/my-new-app-workspace.git my-new-app
 
-# 2. アプリ本体用リポジトリ（③）を初期化してGitHubに作成
-#    アプリ本体は接尾辞なしのクリーンな名前（my-app または MyNewApp）を使う
-mkdir -p Repo/my-app
-cd Repo/my-app
-git init -b main
-echo "# my-app" > README.md
-git add README.md && git commit -m "Initial commit"
-gh repo create my-app --private --source=. --remote=origin --push
-cd ../..   # プロジェクトルートに戻る
+# 2. 初期化スクリプトを実行（アプリ本体 ③ Repo/my-new-app のGitHub作成まで全自動完了）
+cd my-new-app && ./setup.sh
 
 # ------------------------------------------------------------
 # 方法B: ローカルコピーから作成
 # ------------------------------------------------------------
-cp -R app-dev-template MyNewApp
-cd MyNewApp && ./setup.sh
-# その後、ワークスペース（②）とアプリ本体（③）それぞれで gh repo create を実行
+cp -R app-dev-template my-new-app
+cd my-new-app && ./setup.sh
+```
+
+### 💡 1アクション（1コマンド）で完了させたい場合
+
+お使いの端末（Macの `~/.zshrc` など）に以下のシェル関数を追加しておくと、ターミナルで `create-app my-new-app` と打つだけで**全工程が1発で完了**します。
+
+```bash
+# ~/.zshrc に追記
+create-app() {
+  if [ -z "$1" ]; then
+    echo "使用方法: create-app <プロジェクト名>"
+    return 1
+  fi
+  local PROJECT_NAME="$1"
+  local GITHUB_USER="<あなたのアカウント名>"
+
+  gh repo create "${PROJECT_NAME}-workspace" --private --template "${GITHUB_USER}/app-dev-template"
+  git clone "git@github.com:${GITHUB_USER}/${PROJECT_NAME}-workspace.git" "${PROJECT_NAME}"
+  cd "${PROJECT_NAME}" && ./setup.sh
+}
 ```
 
 その後:
@@ -101,7 +112,7 @@ cd MyNewApp && ./setup.sh
 `.gitignore` で `Repo/*` を除外しているため、**アプリ側の変更は②の `git status` に一切現れません。**
 実際に「②のコミットメッセージはアプリの実装を語っているのに、中身は `AI/` の更新だけ」という状態が数週間続き、
 アプリのコードがローカル1台にしか存在しなかった事例があります（investment-support、2026-07〜08）。
-作業の区切りでは**②（`MyNewApp-workspace`）と③（`my-app`）の両方**の `git status` を確認し、それぞれコミット・pushしてください。
+作業の区切りでは**②（`my-new-app-workspace`）と③（`my-new-app`）の両方**の `git status` を確認し、それぞれコミット・pushしてください。
 
 ## テンプレート自体のバージョン管理
 

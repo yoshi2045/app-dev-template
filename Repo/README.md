@@ -9,6 +9,6 @@
 
 ```bash
 # 例: 既にローカルで git init 済みのアプリをGitHubに上げる
-cd Repo/my-app
-gh repo create my-app --private --source=. --remote=origin --push
+cd Repo/my-new-app
+gh repo create my-new-app --private --source=. --remote=origin --push
 ```

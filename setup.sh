@@ -38,8 +38,10 @@ done
 IS_NEW_GIT=false
 if [ -d ".git" ]; then
   REMOTE_URL=$(git remote get-url origin 2>/dev/null || true)
-  if [ -n "$REMOTE_URL" ] && [[ "$REMOTE_URL" != *"app-dev-template"* ]]; then
+  if [ -n "$REMOTE_URL" ] && [[ "$REMOTE_URL" == *"-workspace"* ]]; then
     echo "  既存のワークスペースGit設定・リモートURLを維持します (${REMOTE_URL})"
+  elif [ -n "$REMOTE_URL" ] && [[ "$REMOTE_URL" != *"app-dev-template"* ]]; then
+    echo "  既存のGit設定・リモートURLを維持します (${REMOTE_URL})"
   else
     rm -rf .git
     echo "  テンプレートの旧Git履歴を削除し、新規リポジトリとして初期化します"
@@ -60,7 +62,7 @@ fi
 if [ "$IS_NEW_GIT" = true ]; then
   git init -b main
   git add -A
-  git commit -m "Initialize project from app-dev-template"
+  git commit -m "Initialize project from app-dev-template" || true
 fi
 
 # --- 3. アプリ本体リポジトリ（③）の初期化とGitHub作成 ---
@@ -70,16 +72,17 @@ if [ "$PROJECT_NAME" != "app-dev-template" ]; then
     echo "  アプリ本体リポジトリ (Repo/${PROJECT_NAME}) を自動初期化中..."
     mkdir -p "$REPO_DIR"
     (
-      cd "$REPO_DIR"
+      set +e
+      cd "$REPO_DIR" || exit 1
       git init -b main
       if [ ! -f "README.md" ]; then
         echo "# ${PROJECT_NAME}" > README.md
       fi
       git add -A
       git commit -m "Initial commit"
-      if command -v gh &> /dev/null && gh auth status &> /dev/null; then
-        gh repo create "${PROJECT_NAME}" --private --source=. --remote=origin --push
-        echo "  GitHubリポジトリ「${PROJECT_NAME}」を作成・pushしました"
+      if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+        echo "  GitHub上にアプリ本体リポジトリ (${PROJECT_NAME}) を作成中..."
+        gh repo create "${PROJECT_NAME}" --private --source=. --remote=origin --push || echo "  警告: gh repo create に失敗しました（既にリポジトリが存在するか、アクセス権を確認してください）"
       else
         echo "  注意: gh (GitHub CLI) が未認証のためGitHub作成をスキップしました。"
         echo "  後で Repo/${PROJECT_NAME} にて 'gh repo create ${PROJECT_NAME} --private --source=. --remote=origin --push' を実行してください。"

@@ -94,7 +94,7 @@ create-app() {
     return 1
   fi
   local PROJECT_NAME="$1"
-  local GITHUB_USER="<あなたのアカウント名>"  # 例: yoshi2045
+  local GITHUB_USER="<あなたのアカウント名>"  # 例: octocat
 
   # ローカル同名フォルダのチェック
   if [ -d "${PROJECT_NAME}" ]; then
@@ -134,7 +134,7 @@ create-app() {
 
 `.gitignore` で `Repo/*` を除外しているため、**アプリ側の変更は②の `git status` に一切現れません。**
 実際に「②のコミットメッセージはアプリの実装を語っているのに、中身は `AI/` の更新だけ」という状態が数週間続き、
-アプリのコードがローカル1台にしか存在しなかった事例があります（investment-support、2026-07〜08）。
+アプリのコードがローカル1台にしか存在しなかった事例があります。
 作業の区切りでは**②（`my-new-app-workspace`）と③（`my-new-app`）の両方**の `git status` を確認し、それぞれコミット・pushしてください。
 
 ## テンプレート自体のバージョン管理
